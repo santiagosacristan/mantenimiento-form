@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Parte de Mantenimiento</title>
+  <style>
+    :root { --gap: 12px; }
+    body { font-family: system-ui, Arial, sans-serif; margin: 24px; }
+    form { max-width: 560px; display: grid; gap: var(--gap); }
+    .field { display: grid; gap: 6px; }
+    .title { font-weight: 700; }
+    .help { color: #555; font-size: 0.9rem; }
+    select, input, textarea, button { padding: 10px; font-size: 15px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+    .req { color: #b10000; margin-left: 4px; }
+    button { font-weight: 600; cursor: pointer; }
+    .msg { font-size: 14px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+  <h1>Parte de Mantenimiento</h1>
+  <p>Rellena todos los campos marcados con <span class="req">*</span>.</p>
+
+  <form id="formMto" novalidate>
+    <!-- Tipo de mantenimiento -->
+    <div class="field">
+      <div class="title">Tipo de mantenimiento <span class="req">*</span></div>
+      <div class="help">Selecciona si la intervención fue Preventiva o Correctiva.</div>
+      <select id="tipo_mantenimiento" name="tipo_mantenimiento" required>
+        <option value="" selected disabled>Selecciona una opción</option>
+        <option value="Preventivo">Preventivo</option>
+        <option value="Correctivo">Correctivo</option>
+      </select>
+    </div>
+
+    <!-- Parada de producción -->
+    <div class="field">
+      <div class="title">¿Ha habido parada de producción? <span class="req">*</span></div>
+      <div class="help">Indica si la intervención supuso detener la línea.</div>
+      <select id="parada_produccion" name="parada_produccion" required>
+        <option value="" selected disabled>Selecciona una opción</option>
+        <option value="Si">Sí</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <!-- Nº de operario -->
+      <div class="field">
+        <div class="title">Nº de operario <span class="req">*</span></div>
+        <div class="help">Número de operario.</div>
+        <input id="num_operario" name="num_operario"
+               inputmode="numeric" pattern="^[0-9]{1,10}$"
+               placeholder="Ej: 34761" required />
+      </div>
+
+      <!-- Nombre y apellidos -->
+      <div class="field">
+        <div class="title">Nombre y apellidos <span class="req">*</span></div>
+        <div class="help">Escribe tu nombre.</div>
+        <input id="nombre_apellidos" name="nombre_apellidos"
+               placeholder="Ej: David Jorge Garrido" required />
+      </div>
+    </div>
+
+    <!-- Correo -->
+    <div class="field">
+      <div class="title">Correo electrónico <span class="req">*</span></div>
+      <div class="help">Usa tu correo corporativo si es posible.</div>
+      <input id="email" name="email" type="email" placeholder="nombre@empresa.com" required />
+    </div>
+
+    <!-- Número de teléfono -->
+    <div class="field">
+      <div class="title">Número de teléfono <span class="req">*</span></div>
+      <div class="help">Número de teléfono.</div>
+      <input id="numero_telefono" name="numero_telefono" type="tel"
+             placeholder="+34 600 123 123"
+             pattern="^[0-9+\s()-]{6,20}$" required />
+    </div>
+
+    <!-- Token opcional anti-spam -->
+    <input type="hidden" name="token" value="CAMBIA_ESTE_TOKEN_SEGURO" />
+
+    <button type="submit">Enviar parte</button>
+    <div id="msg" class="msg" aria-live="polite"></div>
+  </form>
+
+  <script>
+    // ← Cambia por la Production URL de tu Webhook de n8n
+    const URL_N8N = "https://TU-SUBDOMINIO.n8n.cloud/webhook/formulario-contacto";
+
+    const f = document.getElementById("formMto");
+    const msg = document.getElementById("msg");
+
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.textContent = "";
+
+      if (!f.reportValidity()) return;
+
+      const payload = Object.fromEntries(new FormData(f).entries());
+      try {
+        const res = await fetch(URL_N8N, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        msg.style.color = "green";
+        msg.textContent = "Parte enviado correctamente.";
+        f.reset();
+      } catch (err) {
+        msg.style.color = "crimson";
+        msg.textContent = "Error enviando el parte. Revisa la URL del webhook o la conexión.";
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
